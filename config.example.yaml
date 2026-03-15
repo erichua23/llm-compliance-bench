@@ -1,0 +1,42 @@
+# LLM Compliance Bench - API 配置
+# 复制为 config.yaml 并填入你的 API key
+
+models:
+  kimi:
+    provider: moonshot
+    base_url: https://api.moonshot.cn/v1
+    api_key: "sk-your-kimi-key"
+    model_id: moonshot-v1-auto
+    enabled: true
+
+  glm:
+    provider: zhipu
+    base_url: https://open.bigmodel.cn/api/paas/v4
+    api_key: "your-glm-key"
+    model_id: glm-4-plus
+    enabled: true
+
+  minimax:
+    provider: minimax
+    base_url: https://api.minimaxi.chat/v1
+    api_key: "sk-your-minimax-key"
+    model_id: MiniMax-Text-01
+    enabled: true
+
+  qwen:
+    provider: dashscope
+    base_url: https://dashscope.aliyuncs.com/compatible-mode/v1
+    api_key: "sk-your-qwen-key"
+    model_id: qwen-plus
+    enabled: true
+
+# 测试配置
+bench:
+  # 每个用例重复测试次数（取平均分）
+  repeat: 3
+  # API 调用间隔（秒），避免限流
+  delay: 1.0
+  # 超时（秒）
+  timeout: 30
+  # 输出目录
+  output_dir: results
