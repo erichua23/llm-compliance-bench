@@ -8,6 +8,7 @@ class KimiModel:
 
     def __init__(self, config: dict):
         self.model_id = config["model_id"]
+        self._config = config
         self._base_url = config["base_url"].rstrip("/")
         self._api_key = config["api_key"]
         self._timeout = config.get("timeout", 30)
@@ -15,7 +16,7 @@ class KimiModel:
 
     @property
     def name(self) -> str:
-        return "Kimi"
+        return self._config.get("display_name") or "Kimi"
 
     def chat(self, system: str, user: str) -> str:
         resp = httpx.post(

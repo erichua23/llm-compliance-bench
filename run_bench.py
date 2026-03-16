@@ -194,8 +194,9 @@ def run_bench(config: dict, model_filter: str | None, category: str | None):
 
     console.print()
 
+    model_info = {name: {"display_name": m.name, "model_id": m.model_id} for name, m in models_to_test.items()}
     console.print(Panel(
-        f"Models: {', '.join(models_to_test.keys())}\n"
+        f"Models: {', '.join(m.name for m in models_to_test.values())}\n"
         f"Cases: {len(cases)} | Repeat: {repeat}x\n"
         f"Total API calls: {len(models_to_test) * len(cases) * repeat}",
         title="LLM Compliance Bench",
@@ -243,7 +244,7 @@ def run_bench(config: dict, model_filter: str | None, category: str | None):
             "timestamp": timestamp,
             "config": {
                 "repeat": repeat,
-                "models": list(models_to_test.keys()),
+                "models": model_info,
                 "case_count": len(cases),
                 "category_filter": category,
             },
@@ -251,19 +252,38 @@ def run_bench(config: dict, model_filter: str | None, category: str | None):
         }, f, ensure_ascii=False, indent=2)
 
     console.print(f"\n[green]Results saved to {result_file}[/green]")
-    print_report(all_results, cases)
+    print_report(all_results, cases, model_info=model_info)
 
 
-def print_report(all_results: dict, cases: list[dict] | None = None):
+def print_report(all_results: dict, cases: list[dict] | None = None, model_info: dict | None = None):
     """Print a comparison table."""
     model_names = list(all_results.keys())
+
+    # Show model details if available
+    if model_info:
+        info_table = Table(title="Tested Models")
+        info_table.add_column("Key", style="dim")
+        info_table.add_column("Display Name", style="bold")
+        info_table.add_column("Model ID")
+        for key in model_names:
+            info = model_info.get(key, {})
+            info_table.add_row(key, info.get("display_name", key), info.get("model_id", "?"))
+        console.print(info_table)
+
+    # Use display names for column headers
+    display_names = {}
+    for key in model_names:
+        if model_info and key in model_info:
+            display_names[key] = model_info[key].get("display_name", key)
+        else:
+            display_names[key] = key
 
     # -- Category summary --
     console.print("\n")
     cat_table = Table(title="Category Scores (avg, 0-3 scale, higher = better compliance)")
     cat_table.add_column("Category", style="bold")
     for m in model_names:
-        cat_table.add_column(m, justify="center")
+        cat_table.add_column(display_names[m], justify="center")
 
     categories = sorted(set(
         r["case"]["category"] for results in all_results.values() for r in results
@@ -291,7 +311,7 @@ def print_report(all_results: dict, cases: list[dict] | None = None):
     diff_table = Table(title="Difficulty Breakdown")
     diff_table.add_column("Difficulty", style="bold")
     for m in model_names:
-        diff_table.add_column(m, justify="center")
+        diff_table.add_column(display_names[m], justify="center")
 
     for diff in ["easy", "medium", "hard"]:
         row = [diff]
@@ -309,7 +329,7 @@ def print_report(all_results: dict, cases: list[dict] | None = None):
     detail_table.add_column("Name", width=25)
     detail_table.add_column("Diff", width=6)
     for m in model_names:
-        detail_table.add_column(m, justify="center", width=8)
+        detail_table.add_column(display_names[m], justify="center", width=10)
 
     # Collect all case IDs in order
     case_ids = []
@@ -352,7 +372,7 @@ def show_report(result_file: str | None = None):
     with open(path) as f:
         data = json.load(f)
 
-    print_report(data["results"])
+    print_report(data["results"], model_info=data.get("config", {}).get("models"))
 
 
 def main():

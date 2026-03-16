@@ -24,7 +24,7 @@ class BaseModel:
 
     @property
     def name(self) -> str:
-        return self.__class__.__name__
+        return self._config.get("display_name") or self.__class__.__name__
 
     def chat(self, system: str, user: str) -> str:
         resp = self.client.chat.completions.create(
